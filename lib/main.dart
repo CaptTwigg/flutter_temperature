@@ -1,14 +1,32 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 // Import the firebase_core and cloud_firestore plugin
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  String userRaw = await (rootBundle.loadString("UserCredential.json"));
+  var user = jsonDecode(userRaw);
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: user["email"],
+        password: user["password"]
+    );
+  } on FirebaseAuthException catch (e) {
+    if (e.code == 'user-not-found') {
+      print('No user found for that email.');
+    } else if (e.code == 'wrong-password') {
+      print('Wrong password provided for that user.');
+    }
+  }
   runApp(MyApp());
 }
 
@@ -116,7 +134,7 @@ class GetUserName extends StatelessWidget {
       future: users.where('time', isGreaterThanOrEqualTo: _start).where('time', isLessThanOrEqualTo: _end).orderBy("time").get(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasError) {
-          return Text("Something went wrong");
+          return Text(snapshot.error);
         }
 
         if (snapshot.connectionState == ConnectionState.done) {
