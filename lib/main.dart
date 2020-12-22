@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/services.dart';
+import 'package:swipedetector/swipedetector.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,10 +17,7 @@ void main() async {
   String userRaw = await (rootBundle.loadString("UserCredential.json"));
   var user = jsonDecode(userRaw);
   try {
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: user["email"],
-        password: user["password"]
-    );
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: user["email"], password: user["password"]);
   } on FirebaseAuthException catch (e) {
     if (e.code == 'user-not-found') {
       print('No user found for that email.');
@@ -86,7 +84,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   Expanded(
                     flex: 1,
-                    child: GetUserName("0DL2zXF4YaXFzwHWXhcI"),
+                    child: SwipeDetector(
+                      child: GetUserName("0DL2zXF4YaXFzwHWXhcI"),
+                      onSwipeRight: () {
+                        setState(() {
+                          selectedDate = selectedDate.subtract(Duration(days: 1));
+                        });
+                      },
+                      onSwipeLeft: () {
+                        setState(() {
+                          selectedDate = selectedDate.add(Duration(days: 1));
+                        });
+                      },
+                    ),
                   )
                 ],
               ),
@@ -170,9 +180,9 @@ class GroupedBarChart extends StatelessWidget {
       barGroupingType: charts.BarGroupingType.grouped,
       primaryMeasureAxis: new charts.NumericAxisSpec(
         tickProviderSpec: new charts.BasicNumericTickProviderSpec(desiredTickCount: 10),
-          renderSpec: charts.GridlineRendererSpec(
-            labelStyle: charts.TextStyleSpec( color: darkModeOn ? charts.MaterialPalette.white : charts.MaterialPalette.black),
-          ),
+        renderSpec: charts.GridlineRendererSpec(
+          labelStyle: charts.TextStyleSpec(color: darkModeOn ? charts.MaterialPalette.white : charts.MaterialPalette.black),
+        ),
       ),
       domainAxis: charts.AxisSpec<String>(
         renderSpec: charts.GridlineRendererSpec(
